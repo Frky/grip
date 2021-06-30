@@ -327,7 +327,7 @@ serve(path=None, host=None, port=None, user_content=False, context=None, usernam
              takes the form of `username/project`
 - `username`: The user to authenticate with GitHub to extend the API limit
 - `password`: The password to authenticate with GitHub to extend the API limit
-- `render_offline`: Whether to render locally using [Python-Markdown][] (Note: this is a work in progress)
+- `render_offline`: Whether to render locally using [Python-Markdown][]
 - `render_wide`: Whether to render a wide page, `False` by default (this has no effect when used with `user_content`)
 - `render_inline`: Whether to inline the styles within the HTML file
 - `api_url`: A different base URL for the github API, for example that of a Github Enterprise instance. The default is the public API https://api.github.com.
@@ -351,7 +351,7 @@ export(path=None, user_content=False, context=None, username=None, password=None
              takes the form of `username/project`
 - `username`: The user to authenticate with GitHub to extend the API limit
 - `password`: The password to authenticate with GitHub to extend the API limit
-- `render_offline`: Whether to render locally using [Python-Markdown][] (Note: this is a work in progress)
+- `render_offline`: Whether to render locally using [Python-Markdown][]
 - `render_wide`: Whether to render a wide page, `False` by default (this has no effect when used with `user_content`)
 - `render_inline`: Whether to inline the styles within the HTML file (Note: unlike the other API functions, this defaults to `True`)
 - `out_filename`: The filename to write to, `<in_filename>.html` by default
@@ -377,7 +377,7 @@ create_app(path=None, user_content=False, context=None, username=None, password=
              takes the form of `username/project`
 - `username`: The user to authenticate with GitHub to extend the API limit
 - `password`: The password to authenticate with GitHub to extend the API limit
-- `render_offline`: Whether to render locally using [Python-Markdown][] (Note: this is a work in progress)
+- `render_offline`: Whether to render locally using [Python-Markdown][]
 - `render_wide`: Whether to render a wide page, `False` by default (this has no effect when used with `user_content`)
 - `render_inline`: Whether to inline the styles within the HTML file
 - `api_url`: A different base URL for the github API, for example that of a Github Enterprise instance. The default is the public API https://api.github.com.
@@ -413,7 +413,7 @@ render_content(text, user_content=False, context=None, username=None, password=N
              takes the form of `username/project`
 - `username`: The user to authenticate with GitHub to extend the API limit
 - `password`: The password to authenticate with GitHub to extend the API limit
-- `render_offline`: Whether to render locally using [Python-Markdown][] (Note: this is a work in progress)
+- `render_offline`: Whether to render locally using [Python-Markdown][]
 - `api_url`: A different base URL for the github API, for example that of a Github Enterprise instance. This is required when not using the offline renderer.
 - `title`: The page title, derived from `path` by default
 
@@ -433,7 +433,7 @@ render_page(path=None, user_content=False, context=None, username=None, password
              takes the form of `username/project`
 - `username`: The user to authenticate with GitHub to extend the API limit
 - `password`: The password to authenticate with GitHub to extend the API limit
-- `render_offline`: Whether to render offline using [Python-Markdown][] (Note: this is a work in progress)
+- `render_offline`: Whether to render offline using [Python-Markdown][]
 - `render_wide`: Whether to render a wide page, `False` by default (this has no effect when used with `user_content`)
 - `render_inline`: Whether to inline the styles within the HTML file
 - `api_url`: A different base URL for the github API, for example that of a Github Enterprise instance. The default is the public API https://api.github.com.

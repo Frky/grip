@@ -7,11 +7,11 @@ import errno
 
 from .app import Grip
 from .readers import DirectoryReader, StdinReader, TextReader
-from .renderers import GitHubRenderer, OfflineRenderer
+from .renderers import OfflineRenderer
 
 
 def create_app(path=None, user_content=False, context=None, username=None,
-               password=None, render_offline=False, render_wide=False,
+               password=None, render_wide=False,
                render_inline=False, api_url=None, title=None, text=None,
                autorefresh=None, quiet=None, grip_class=None):
     """
@@ -31,23 +31,15 @@ def create_app(path=None, user_content=False, context=None, username=None,
         source = DirectoryReader(path)
 
     # Customize the renderer
-    if render_offline:
-        renderer = OfflineRenderer(user_content, context)
-    elif user_content or context or api_url:
-        renderer = GitHubRenderer(user_content, context, api_url)
-    else:
-        renderer = None
-
-    # Optional basic auth
-    auth = (username, password) if username or password else None
+    renderer = OfflineRenderer(user_content, context)
 
     # Create the customized app with default asset manager
-    return grip_class(source, auth, renderer, None, render_wide,
+    return grip_class(source, renderer, render_wide,
                       render_inline, title, autorefresh, quiet)
 
 
 def serve(path=None, host=None, port=None, user_content=False, context=None,
-          username=None, password=None, render_offline=False,
+          username=None, password=None,
           render_wide=False, render_inline=False, api_url=None, title=None,
           autorefresh=True, browser=False, quiet=None, grip_class=None):
     """
@@ -55,7 +47,7 @@ def serve(path=None, host=None, port=None, user_content=False, context=None,
     a README.
     """
     app = create_app(path, user_content, context, username, password,
-                     render_offline, render_wide, render_inline, api_url,
+                     render_wide, render_inline, api_url,
                      title, None, autorefresh, quiet, grip_class)
     app.run(host, port, open_browser=browser)
 

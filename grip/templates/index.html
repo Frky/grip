@@ -3,6 +3,7 @@
 {% block title %}{% if title %}{{ title }}{% else %}{{ filename or '' }} - Grip{% endif %}{% endblock %}
 
 {%- block styles -%}
+  <link rel="stylesheet" href="{{ url_for('static', filename='github-markdown.css') }}" />
   {%- for style_url in style_urls %}
   <link rel="stylesheet" href="{{ style_url }}" />
   {%- endfor %}
@@ -28,6 +29,19 @@
     /* User-content overrides */
     .discussion-timeline.wide {
       width: 920px;
+    }
+    .markdown-body {
+       box-sizing: border-box;
+       min-width: 200px;
+       max-width: 980px;
+       margin: 0 auto;
+       padding: 45px;
+    }
+
+    @media (max-width: 767px) {
+       .markdown-body {
+        padding: 15px;
+       }
     }
   </style>
 {%- endblock -%}
@@ -102,63 +116,8 @@
 
 {%- block page -%}
   <div id="preview-page" class="preview-page" data-autorefresh-url="{{ autorefresh_url if autorefresh_url }}">
-    <main id="js-repo-pjax-container">
-      <div class="container new-discussion-timeline experiment-repo-nav">
-        <div class="repository-content">
-
-          {% if not user_content %}
-
-            <div id="readme" class="Box Box--condensed instapaper_body md js-code-block-container">
-              {% if title or filename %}
-                <div class="Box-header d-flex flex-items-center flex-justify-between px-2">
-                  <h3 class="Box-title pr-3">
-                    <span class="octicon octicon-book"></span>
-                    {{ title or filename }}
-                  </h3>
-                </div>
-              {% endif %}
-              <div class="Box-body">
-                <article id="grip-content" class="markdown-body entry-content p-5" itemprop="text">
-                  {{ content|safe }}
-                </article>
-              </div>
-            </div>
-
-          {% else %}
-
-            <div class="js-check-all-container">
-              <div class="clearfix js-issues-results">
-                <div class="clearfix pull-request-tab-content is-visible js-socket-channel js-updatable-content">
-                  <div class="discussion-timeline pull-discussion-timeline js-pull-discussion-timeline js-quote-selection-container js-review-state-classes">
-                    <div class="js-discussion js-socket-channel">
-                      <div class="timeline-comment-wrapper js-comment-container mt-0 js-socket-channel">
-                        <div class="timeline-comment-group js-minimizable-comment-group js-targetable-comment">
-                          <div class="unminimized-comment editable-comment comment previewable-edit js-comment js-task-list-container timeline-comment reorderable-task-lists">
-                            {% if title %}
-                              <div class="timeline-comment-header clearfix">
-                                <h3 class="timeline-comment-header-text f5 text-normal">
-                                  <strong class="css-truncate expandable"><span class="author text-inherit css-truncate-target">{{ title }}</span></strong>
-                                </h3>
-                              </div>
-                            {% endif %}
-                            <div class="edit-comment-hide">
-                              <div class="d-block comment-body markdown-body js-comment-body" id="grip-content">
-                                {{ content|safe }}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          {% endif %}
-
-        </div>
-      </div>
-    </main>
+    <article class="markdown-body entry-content" itemprop="text" id="grip-content">
+        {{ content|safe }}
+    </article>
   </div>
 {%- endblock -%}

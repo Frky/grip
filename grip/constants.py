@@ -17,22 +17,3 @@ DEFAULT_GRIPHOME = '~/.grip'
 
 # The default URL of the Grip server
 DEFAULT_GRIPURL = '/__/grip'
-
-
-# The public GitHub API
-DEFAULT_API_URL = 'https://api.github.com'
-
-
-# Style parsing
-STYLE_URLS_SOURCE = 'https://github.com/joeyespo/grip'
-# Note: Using a list in case the implementation limitation is a problem
-# https://docs.python.org/3/library/re.html#re.findall
-STYLE_URLS_RES = [
-    r'''<link.+href=['"]?([^'" >]+)['"]?.+rel=['"]?stylesheet['"]?.+/>''',
-    r'''<link.+rel=['"]?stylesheet['"]?.+href=['"]?([^'" >]+)['"]?.+/>''',
-]
-STYLE_ASSET_URLS_RE = (
-    r'''url\(['"]?(/static/fonts/octicons/[^'" \)]+)['"]?\)''')
-STYLE_ASSET_URLS_SUB_FORMAT = r'url("{0}\1")'
-STYLE_ASSET_URLS_INLINE_FORMAT = (
-    r'''url\(['"]?((?:/static|{0})/[^'" \)]+)['"]?\)''')
