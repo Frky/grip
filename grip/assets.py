@@ -15,9 +15,6 @@ except ImportError:
 import requests
 from flask import safe_join
 
-from .constants import (
-    STYLE_URLS_SOURCE, STYLE_URLS_RE, STYLE_ASSET_URLS_RE,
-    STYLE_ASSET_URLS_SUB_FORMAT)
 from .vendor.six import add_metaclass
 
 
@@ -61,122 +58,38 @@ class ReadmeAssetManager(object):
         pass
 
 
-class GitHubAssetManager(ReadmeAssetManager):
+class OfflineAssetManager(ReadmeAssetManager):
     """
     Reads the styles used for rendering Readme pages.
 
     Set cache_path to None to disable caching.
     """
     def __init__(self, cache_path, style_urls=None):
-        super(GitHubAssetManager, self).__init__(cache_path, style_urls)
+        super(OfflineAssetManager, self).__init__(cache_path, style_urls)
 
     def _get_style_urls(self, asset_url_path):
         """
         Gets the specified resource and parses all style URLs and their
         assets in the form of the specified patterns.
         """
-        # Check cache
-        if self.cache_path:
-            cached = self._get_cached_style_urls(asset_url_path)
-            # Skip fetching styles if there's any already cached
-            if cached:
-                return cached
-
-        # Find style URLs
-        r = requests.get(STYLE_URLS_SOURCE)
-        if not 200 <= r.status_code < 300:
-            print('Warning: retrieving styles gave status code',
-                  r.status_code, file=sys.stderr)
-        urls = re.findall(STYLE_URLS_RE, r.text)
-
-        # Cache the styles and their assets
-        if self.cache_path:
-            is_cached = self._cache_contents(urls, asset_url_path)
-            if is_cached:
-                urls = self._get_cached_style_urls(asset_url_path)
-
-        return urls
+        raise NotImplemented
 
     def _get_cached_style_urls(self, asset_url_path):
         """
         Gets the URLs of the cached styles.
         """
-        try:
-            cached_styles = os.listdir(self.cache_path)
-        except IOError as ex:
-            if ex.errno != errno.ENOENT and ex.errno != errno.ESRCH:
-                raise
-            return []
-        except OSError:
-            return []
-        return [posixpath.join(asset_url_path, style)
-                for style in cached_styles
-                if style.endswith('.css')]
+        raise NotImplemented
 
     def _cache_contents(self, style_urls, asset_url_path):
         """
         Fetches the given URLs and caches their contents
         and their assets in the given directory.
         """
-        files = {}
-
-        asset_urls = []
-        for style_url in style_urls:
-            print(' * Downloading style', style_url, file=sys.stderr)
-            r = requests.get(style_url)
-            if not 200 <= r.status_code < 300:
-                print(' -> Warning: Style request responded with',
-                      r.status_code, file=sys.stderr)
-                files = None
-                continue
-            asset_content = r.text
-            # Find assets and replace their base URLs with the cache directory
-            for url in re.findall(STYLE_ASSET_URLS_RE, asset_content):
-                asset_urls.append(urljoin(style_url, url))
-            contents = re.sub(
-                STYLE_ASSET_URLS_RE,
-                STYLE_ASSET_URLS_SUB_FORMAT.format(asset_url_path.rstrip('/')),
-                asset_content)
-            # Prepare cache
-            if files is not None:
-                filename = self.cache_filename(style_url)
-                files[filename] = contents.encode('utf-8')
-
-        for asset_url in asset_urls:
-            print(' * Downloading asset', asset_url, file=sys.stderr)
-            # Retrieve binary file and show message
-            r = requests.get(asset_url, stream=True)
-            if not 200 <= r.status_code < 300:
-                print(' -> Warning: Asset request responded with',
-                      r.status_code, file=sys.stderr)
-                files = None
-                continue
-            # Prepare cache
-            if files is not None:
-                filename = self.cache_filename(asset_url)
-                files[filename] = r.raw.read(decode_content=True)
-
-        # Skip caching if something went wrong to try again next time
-        if not files:
-            return False
-
-        # Cache files if all downloads were successful
-        cache = {}
-        for relname in files:
-            cache[safe_join(self.cache_path, relname)] = files[relname]
-        if not os.path.exists(self.cache_path):
-            os.makedirs(self.cache_path)
-        for filename in cache:
-            with open(filename, 'wb') as f:
-                f.write(cache[filename])
-        print(' * Cached all downloads in', self.cache_path, file=sys.stderr)
-        return True
+        raise NotImplemented
 
     def retrieve_styles(self, asset_url_path):
         """
         Get style URLs from the source HTML page and specified cached
         asset base URL.
         """
-        if not asset_url_path.endswith('/'):
-            asset_url_path += '/'
-        self.style_urls.extend(self._get_style_urls(asset_url_path))
+        raise NotImplemented

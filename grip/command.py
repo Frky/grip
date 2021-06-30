@@ -104,7 +104,7 @@ def main(argv=None, force_utf8=True, patch_svg=True):
     if args['--export']:
         try:
             export(args['<path>'], args['--user-content'], args['--context'],
-                   args['--user'], password, args['--render-offline'],
+                   args['--user'], password,
                    args['--wide'], not args['--no-inline'], args['<address>'],
                    args['--api-url'], args['--title'])
             return 0
@@ -123,7 +123,7 @@ def main(argv=None, force_utf8=True, patch_svg=True):
     # Run server
     try:
         serve(path, host, port, args['--user-content'], args['--context'],
-              args['--user'], password, args['--render-offline'],
+              args['--user'], password,
               args['--wide'], False, args['--api-url'], args['--title'],
               not args['--norefresh'], args['--browser'], args['--quiet'],
               None)

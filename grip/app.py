@@ -25,13 +25,12 @@ from flask import (
     send_from_directory, url_for)
 
 from . import __version__
-from .assets import GitHubAssetManager, ReadmeAssetManager
 from .browser import start_browser_when_ready
 from .constants import (
-    DEFAULT_GRIPHOME, DEFAULT_GRIPURL, STYLE_ASSET_URLS_INLINE_FORMAT)
+    DEFAULT_GRIPHOME, DEFAULT_GRIPURL)
 from .exceptions import AlreadyRunningError, ReadmeNotFoundError
 from .readers import DirectoryReader
-from .renderers import GitHubRenderer, ReadmeRenderer
+from .renderers import ReadmeRenderer
 
 
 class Grip(Flask):
@@ -39,8 +38,8 @@ class Grip(Flask):
     A Flask application that can serve the specified file or directory
     containing a README.
     """
-    def __init__(self, source=None, auth=None, renderer=None,
-                 assets=None, render_wide=None, render_inline=None, title=None,
+    def __init__(self, source=None, renderer=None,
+                 render_wide=None, render_inline=None, title=None,
                  autorefresh=None, quiet=None, grip_url=None,
                  static_url_path=None, instance_path=None, **kwargs):
         # Defaults
@@ -79,22 +78,15 @@ class Grip(Flask):
             autorefresh = self.config['AUTOREFRESH']
         if quiet is None:
             quiet = self.config['QUIET']
-        if auth is None:
-            username = self.config['USERNAME']
-            password = self.config['PASSWORD']
-            if username or password:
-                auth = (username, password)
 
         # Thread-safe event to signal to the polling threads to exit
         self._run_mutex = threading.Lock()
         self._shutdown_event = None
 
         # Parameterized attributes
-        self.auth = auth
         self.autorefresh = autorefresh
         self.reader = source
         self.renderer = renderer
-        self.assets = assets
         self.render_wide = render_wide
         self.render_inline = render_inline
         self.title = title
@@ -108,14 +100,6 @@ class Grip(Flask):
                     'Expected Grip.default_renderer to return a '
                     'ReadmeRenderer instance, got {0}.'.format(type(renderer)))
             self.renderer = renderer
-        if self.assets is None:
-            assets = self.default_asset_manager()
-            if not isinstance(assets, ReadmeAssetManager):
-                raise TypeError(
-                    'Expected Grip.default_asset_manager to return an '
-                    'ReadmeAssetManager instance, got {0}.'.format(
-                        type(assets)))
-            self.assets = assets
 
         # Add missing content types
         self.add_content_types()
@@ -128,9 +112,6 @@ class Grip(Flask):
         rate_limit_route = posixpath.join(grip_url, 'rate-limit-preview')
 
         # Initialize views
-        self.before_first_request(self._retrieve_styles)
-        self.add_url_rule(asset_route, 'asset', self._render_asset)
-        self.add_url_rule(asset_subpath, 'asset', self._render_asset)
         self.add_url_rule('/', 'render', self._render_page)
         self.add_url_rule('/<path:subpath>', 'render', self._render_page)
         self.add_url_rule(refresh_route, 'refresh', self._render_refresh)
@@ -138,13 +119,6 @@ class Grip(Flask):
         self.add_url_rule(rate_limit_route, 'rate_limit',
                           self._render_rate_limit_page)
         self.errorhandler(403)(self._render_rate_limit_page)
-
-    def _render_asset(self, subpath):
-        """
-        Renders the specified cache file.
-        """
-        return send_from_directory(
-            self.assets.cache_path, self.assets.cache_filename(subpath))
 
     def _render_page(self, subpath=None):
         # Normalize the subpath
@@ -171,7 +145,7 @@ class Grip(Flask):
 
         # Render the Readme content
         try:
-            content = self.renderer.render(text, self.auth)
+            content = self.renderer.render(text)
         except requests.HTTPError as ex:
             if ex.response.status_code == 403:
                 abort(403)
@@ -190,8 +164,8 @@ class Grip(Flask):
         return render_template(
             'index.html', title=title, content=content, favicon=favicon,
             user_content=self.renderer.user_content,
-            wide_style=self.render_wide, style_urls=self.assets.style_urls,
-            styles=self.assets.styles, autorefresh_url=autorefresh_url)
+            wide_style=self.render_wide, style_urls=[],
+            styles=[], autorefresh_url=autorefresh_url)
 
     def _render_refresh(self, subpath=None):
         if not self.autorefresh:
@@ -237,7 +211,7 @@ class Grip(Flask):
                         return
                     # Render the Readme content
                     try:
-                        content = self.renderer.render(text, self.auth)
+                        content = self.renderer.render(text)
                     except requests.HTTPError as ex:
                         if ex.response.status_code == 403:
                             abort(403)
@@ -254,9 +228,7 @@ class Grip(Flask):
         """
         Renders the rate limit page.
         """
-        auth = request.args.get('auth')
-        is_auth = auth == '1' if auth else bool(self.auth)
-        return render_template('limit.html', is_authenticated=is_auth), 403
+        return render_template('limit.html', is_authenticated=False), 403
 
     def _download(self, url, binary=False):
         if urlparse(url).netloc:
@@ -296,38 +268,13 @@ class Grip(Flask):
 
         return styles
 
-    def _inline_styles(self):
-        """
-        Downloads the assets from the style URL list, clears it, and adds
-        each style with its embedded asset to the literal style list.
-        """
-        styles = self._get_styles(self.assets.style_urls, url_for('asset'))
-        self.assets.styles.extend(styles)
-        self.assets.style_urls[:] = []
-
-    def _retrieve_styles(self):
-        """
-        Retrieves the style URLs from the source and caches them. This
-        is called before the first request is dispatched.
-        """
-        try:
-            self.assets.retrieve_styles(url_for('asset'))
-        except Exception as ex:
-            if self.debug:
-                print(format_exc(), file=sys.stderr)
-            else:
-                print(' * Error: could not retrieve styles:', ex,
-                      file=sys.stderr)
-        if self.render_inline:
-            self._inline_styles()
-
     def default_renderer(self):
         """
         Returns the default renderer using the current config.
 
         This is only used if renderer is set to None in the constructor.
         """
-        return GitHubRenderer(api_url=self.config['API_URL'])
+        return OfflineRenderer(api_url=self.config['API_URL'])
 
     def default_asset_manager(self):
         """
@@ -340,7 +287,7 @@ class Grip(Flask):
         if cache_directory:
             cache_directory = cache_directory.format(version=__version__)
             cache_path = os.path.join(self.instance_path, cache_directory)
-        return GitHubAssetManager(cache_path, self.config['STYLE_URLS'])
+        return OfflineAssetManager(cache_path, self.config['STYLE_URLS'])
 
     def add_content_types(self):
         """
@@ -353,9 +300,7 @@ class Grip(Flask):
         mimetypes.add_type('application/octet-stream', '.ttf')
 
     def clear_cache(self):
-        self.assets.clear()
-        if not self.quiet:
-            print('Cache cleared.')
+        raise NotImplemented
 
     def render(self, route=None):
         """
@@ -388,17 +333,6 @@ class Grip(Flask):
             if self._shutdown_event:
                 raise AlreadyRunningError()
             self._shutdown_event = threading.Event()
-
-        # Authentication message
-        if self.auth and not self.quiet:
-            if isinstance(self.auth, tuple):
-                username, password = self.auth
-                auth_method = ('credentials: {0}'.format(username)
-                               if username
-                               else 'personal access token')
-            else:
-                auth_method = type(self.auth).__name__
-            print(' * Using', auth_method, file=sys.stderr)
 
         # Open browser
         browser_thread = (
